@@ -1,0 +1,50 @@
+########################## ROUTING ##########################
+
+open_block CLOCK_OPT
+
+#For Routing we use M2 to M6 metal layers
+set_ignored_layers -max_routing_layer M6 -min_routing_layer M2
+
+#If required use higher metal layers -> M7, M8
+set_app_options -name route.common.net_max_layer_mode -value soft
+
+# Use M1 -> Standard cell pin connection
+set_app_options -name route.common.net_min_layer_mode -value allow_pin_connection
+
+# Routing
+route_auto
+
+########## Stages in Routing ##########
+# 1 -> GLOBAL
+# 2 -> TRACK ASSIGNMENT
+# 3 -> DETAIL ROUTING & SEARCH, REPAIR
+
+save_block -as ROUTING
+
+## Checks ##
+
+check_lvs -max_errors 0
+
+check_routes
+
+########## If shorts and opens existes ##########
+
+#Fixes:
+
+route_eco
+
+optimize_routes
+
+save_block
+
+check_lvs -max_errors 0
+
+check_routes
+
+#After fixing all the violations
+
+save_block -as ROUTING_DONE
+##############################################
+
+##TO remove routing { global_route }
+#remove_routes -global_route
