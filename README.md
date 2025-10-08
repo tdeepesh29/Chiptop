@@ -14,7 +14,7 @@ The PD flow — including **floorplanning, power planning, placement, CTS, routi
 |------------|--------------|
 | **Clock Period** | 4 ns (250 MHz) |
 | **Core Utilization** | 0.70 |
-| **Total Standard Cells** | ~6,157 |
+| **Total Standard Cells** | 6157 |
 | **Total Macros** | 4 |
 | **Clock Ports** | 1 |
 | **Violations** | 0 LVS / 0 DRC |
