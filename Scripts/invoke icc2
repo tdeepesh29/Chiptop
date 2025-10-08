@@ -1,0 +1,34 @@
+##### Invoke the ICC2 ###################
+#change directory to PD => cd => cd PD
+
+tcsh
+source /home/tools/synopsys/cshrc_synopsys
+icc2_shell -output_log_file ./outputs/28aug.log
+
+########## Telling the tool where the inputs are present by giving search path ##########
+set search_path {./inputs}
+
+########## set all tech files to a variable and compress to a ndm file ##########
+set a {saed32_l9pm_tech.ndm saed32_hvt.ndm saed32_lvt.ndm saed32_rvt.ndm saed32_sram_lp.ndm }
+################# creating the library ###################
+create_lib -ref_libs $a ./outputs/chip_top.nlib
+save_lib
+
+########## create block <block_name> ##########
+create_block chiptop
+save_block
+
+########## Reading the Netlist_file ##########
+read_verilog ./inputs/ChipTop_netlist.v
+
+########## Reading Tlup file ##########
+read_parasitic_tech -tlup saed32nm_l9pm_nominal.tluplus -name cnom
+# -early_spec means the min value for RC and -late_spec means the max value of RC
+set_parasitic_parameters -early_spec cnom -late_spec cnom
+
+########## sourcing the .sdc which contains the timing constraints ##########
+source ./inputs/chiptop.sdc
+report_clocks
+save_block
+
+start_gui
