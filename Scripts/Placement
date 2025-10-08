@@ -1,0 +1,13 @@
+########################## PLACEMENT ##########################
+
+set_fixed_objects [get_flat_cells -filter "is_hard_macro"]
+
+derive_placement_blockages -force
+
+#Check for the congestion
+
+place_opt
+
+#Check for the congestion again after place_opt { It Will Less than the Before }
+
+save_block
