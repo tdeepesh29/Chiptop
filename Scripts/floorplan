@@ -1,0 +1,66 @@
+########################## FLOORPLAN ##########################
+
+#Creating the die and core Area
+initialize_floorplan -core_utilization 0.7 -shape R -side_ratio {1 1} -core_offset 5 -use_site_row -site_def_unit
+
+# Placing I/O ports
+set_block_pin_constraints -allowed_layers {M5 M6} -self
+place_pins -ports [get_ports]
+
+## Sanity check whether pins are placed on the track or not.
+check_pin_placement -wire_track true
+
+#### Information about Cells and Ports ####
+
+#Total no.of Cells
+sizeof_collection [get_flat_cells]
+#6161
+
+#Total no.of Macros
+sizeof_collection [get_flat_cells -filter "is_hard_macro"]
+#4
+
+#Total no.of std.cells
+sizeof_collection [get_flat_cells -filter "is_hard_macro==false"]
+#6157
+
+#Total no.of ports { i/p + o/p = total }
+sizeof_collection [get_ports]
+#101
+
+#No.of clock ports
+get_ports "clock"
+#{clock}
+sizeof_collection [get_ports "clock"]
+#1
+
+#Total no.of i/p ports
+sizeof_collection [all_inputs]
+#34 { This include clock pin + input pins }
+sizeof_collection [remove_from_collection [all_inputs] [get_ports "clock"]]
+#33
+#Total no.of output pins
+sizeof_collection [all_outputs]
+#67
+
+### after placing the ports we place the Macros manually ###
+
+#creating keepout margin to the macros
+create_keepout_margin -outer { 1 1 1 1} [get_flat_cells -filter "is_hard_macro"]
+
+#To remove the keepout margins
+#remove_keepout_margins [get_keepout_margins]
+
+#creating blockages automatically by the tool
+derive_placement_blockages -force
+
+# Fix the macros
+set_fixed_objects [get_flat_cells -filter "is_hard_macro"]
+
+
+######## Checking for the congestion ########
+
+create_placement -floorplan
+legalize_placement
+set_ignored_layers -min_routing_layer M2 -max_routing_layer M6
+report_congestion -rerun_global_router
