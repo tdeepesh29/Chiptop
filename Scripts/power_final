@@ -1,0 +1,47 @@
+## POWERPLAN
+remove_pg_strategies -all
+remove_pg_patterns -all
+remove_pg_regions -all
+remove_pg_via_master_rules -all
+remove_pg_strategy_via_rules -all
+remove_routes -net_types {power ground} -ring -stripe -macro_pin -connect -lib_cell_pin_connect
+
+connect_pg_net
+
+set_pg_via_master_rule pgvia_8x10 -via_array_dimension {8 10}
+set_pg_via_master_rule pgvia_8x10 -via_array_dimension {10 8}
+set_all_macros [get_cells -hierarchical -filter "is_hard_macro"]
+
+## create pg mesh pattern - upper and lower straps
+create_pg_mesh_pattern P_top_two_vdvss { {horizontal_layer: M7} (width: 1.104) (spacing: interleaving) (pitch: 13.374) (offset: 0.856) (trim: true) } { {vertical_layer: M5} (width: 4.64) (spacing: interleaving) (pitch: 19.458) (offset: 3.05) (trim: true) } -via_rule { {intersection: adjacent} {via_master: pgvia_8x10} }
+
+set_pg_strategy S_default_vdvvss -core -pattern { {name: P_top_two} (nets: {VSS VDD}) (offset_start: {0 0}) -extension { {stop:design_boundary_and_generate_pin} } }
+
+create_pg_mesh_pattern P_M2_triple -layers { {vertical_layer: M2} (track_alignment: track) (width: 0.3 0.1) (spacing: 2.724) (pitch: 9.728) (offset: 1.216) (trim: true) }
+
+set_pg_strategy S_M2_vdvss -core -pattern { {name: P_M2_triple} (nets: {VDD VSS}) (offset_start: {0 0}) -blockage {macros_with_keepout: $all_macros} -extension { {stop:keep_floating_wire_pieces} } }
+
+set_pg_strategy via_rule S_via_M2_M7 -via_rule { { {strategies: {S_M2_vdvss}} (layers: {M2}) (nets: {VDD}) } } { {strategies: {S_default_vdvvss}} (layers: {M7}) } (via_master: {default}) } { {strategies: {S_M2_vdvss}} (layers: {M2}) (nets: {VSS}) } } { {strategies: {S_default_vdvvss}} (layers: {M7}) } (via_master: {default}) }
+
+compile_pg -strategies {S_default_vdvvss S_M2_vdvss} -via_rule {S_via_M2_M7}
+
+## create pg ring pattern
+create_pg_ring_pattern P_MM_ring -horizontal_layer M5 -horizontal_width {0.5} -vertical_layer M6 -vertical_width {0.5} -corner_bridge false
+set_pg_strategy S_MM_ring_top -macros $all_macros -pattern {pattern: P_MM_ring} (nets: {VSS VDD}) (offset: {0.3 0.3})
+set_pg_strategy via_rule S_ring_vias -via_rule { \
+ { {strategies: {S_MM_ring_top}} (layers: {M5}) (existing: {strap}) } {via_master: {default}} } \
+ { {strategies: {S_MM_ring_top}} (layers: {M6}) (existing: {strap}) } {via_master: {default}} } \
+}
+compile_pg -strategies {S_MM_ring_top} -via_rule S_ring_vias
+
+## create pg macro pin connection pattern
+create_pg_macro_conn_pattern P_MM_pin_conn_type scattered pin -layers {M5 M6}
+set_pg_strategy S_MM_top_pins -macros $all_macros -pattern {pattern: P_MM_pin} (nets: {VSS VDD}) }
+compile_pg -strategies {S_MM_top_pins}
+
+## create pg std cells pin connection pattern
+create_pg_std_cell_conn_pattern P_std_cell_rail
+set_pg_strategy S_std_cell_rail_VSS_VDD_core -blockage {macros_with_keepout: $all_macros} -pattern {pattern: P_std_cell_rail} (nets: {VSS VDD}) }
+set_pg_strategy via_rule S_via_stdcellrail -via_rule {intersection: adjacent} {via_master: default}
+compile_pg -strategies {S_std_cell_rail_VSS_VDD} -via_rule {S_via_stdcellrail}
+```
