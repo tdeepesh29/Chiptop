@@ -1,0 +1,20 @@
+######################### CTS #########################
+#Setting value for Skew and Latency
+set_clock_tree_options -target_skew 0.05 -target_latency 0.4
+
+#max trans limit
+#Giving the max trans value for the clock signal
+set_max_transition 0.1 -clock_path [get_clocks]
+
+#Cells added in the clock path
+#Telling the tool to add only buffers and inverters in clock path
+set_lib_cell_purpose -include cts " *NBUFF*RVT *INV*RVT "
+
+#clock_opt -list_only
+
+#Stages in clock_opt
+# 1 -> build_clock: clock synthesis and optimization
+# 2 -> route_clock: detailed routing of clock nets
+# 3 -> final_opto: datapath optimization based on synthesized clocks
+
+clock_opt
